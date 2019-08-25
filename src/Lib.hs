@@ -32,6 +32,9 @@ csvFile :: FilePath
 csvFile =
   "/home/lsund/Documents/personal/economy/helena/bank-summary/apr/20190818-123093569-umsatz.CSV"
 
+reportFile :: FilePath
+reportFile = "test.txt"
+
 data Transaction =
   Transaction
     { _type :: String
@@ -127,4 +130,4 @@ groupCategory :: [(Category, Maybe Double)] -> [[(Category, Maybe Double)]]
 groupCategory = groupBy (on (==) fst) . sortBy (on compare fst)
 
 genReport :: [(Category, Maybe Double)] -> IO ()
-genReport = writeFile "test.txt" . categorySumToString . categorySums
+genReport = writeFile reportFile . categorySumToString . categorySums
