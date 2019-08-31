@@ -8,6 +8,14 @@ import Data.List (find, groupBy, sortBy)
 import Data.List.Split (splitOn)
 import Data.Maybe
 
+dummy :: [(Category, Maybe Double)]
+dummy =
+  [ (Nightlife, Just 10)
+  , (FastFood, Just 5)
+  , (Nightlife, Just 3)
+  , (Unknown, Nothing)
+  ]
+
 data Category
   = GroceryFarmacy
   | EverydayLife
@@ -30,10 +38,10 @@ data Category
 
 csvFile :: FilePath
 csvFile =
-  "/home/lsund/Documents/personal/economy/helena/bank-summary/apr/20190818-123093569-umsatz.CSV"
+  "data/20190818-123093569-umsatz.CSV"
 
 reportFile :: FilePath
-reportFile = "test.txt"
+reportFile = "data/report.txt"
 
 data Transaction =
   Transaction
@@ -78,8 +86,8 @@ transactions = map fromString . lines
 balance :: [Transaction] -> Maybe Double
 balance = msum . map _amount
 
-categoryMapping :: [(Char, Category)]
-categoryMapping =
+charToCategory :: [(Char, Category)]
+charToCategory =
   [ ('m', GroceryFarmacy)
   , ('e', EverydayLife)
   , ('r', Restaurant)
@@ -97,24 +105,20 @@ categoryMapping =
   , ('u', Unknown)
   ]
 
-userQuery :: Transaction -> IO (Category, Maybe Double)
+userQuery :: Transaction -> IO (Maybe (Category, Maybe Double))
 userQuery t = do
-  mapM_ print categoryMapping
+  mapM_ print charToCategory
+  putStrLn "q: quit"
   print t
   (x:_) <- getLine
-  let cat = fromMaybe Unknown $ snd <$> find ((== x) . fst) categoryMapping
-  return (cat, _amount t)
+  if x == 'q' then
+    return Nothing
+  else do
+    let cat = fromMaybe Unknown $ snd <$> find ((== x) . fst) charToCategory
+    return $ Just (cat, _amount t)
 
-interactiveGroup :: IO [(Category, Maybe Double)]
+interactiveGroup :: IO [Maybe (Category, Maybe Double)]
 interactiveGroup = readFile csvFile >>= mapM userQuery . tail . transactions
-
-dummy :: [(Category, Maybe Double)]
-dummy =
-  [ (Nightlife, Just 10)
-  , (FastFood, Just 5)
-  , (Nightlife, Just 3)
-  , (Unknown, Nothing)
-  ]
 
 categorySums :: [(Category, Maybe Double)] -> [(Category, Double)]
 categorySums xs =
