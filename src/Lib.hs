@@ -8,14 +8,26 @@ import Data.List (find, groupBy, sortBy)
 import Data.List.Split (splitOn)
 import Data.Maybe
 
-dummy :: [(Category, Maybe Double)]
+import Transaction
+
+--------------------------------------------------------------------------------
+-- Dummy
+dummy :: [CategoryRow]
 dummy =
-  [ (Nightlife, Just 10)
-  , (FastFood, Just 5)
-  , (Nightlife, Just 3)
-  , (Unknown, Nothing)
+  [ CategoryRow Nightlife (Just 10)
+  , CategoryRow FastFood (Just 5)
+  , CategoryRow Nightlife (Just 3)
+  , CategoryRow Unknown Nothing
   ]
 
+csvFile :: FilePath
+csvFile = "data/20190818-123093569-umsatz.CSV"
+
+reportFile :: FilePath
+reportFile = "data/report.txt"
+
+--------------------------------------------------------------------------------
+-- Types
 data Category
   = GroceryFarmacy
   | EverydayLife
@@ -36,22 +48,14 @@ data Category
   | Unknown
   deriving (Show, Eq, Ord)
 
-csvFile :: FilePath
-csvFile =
-  "data/20190818-123093569-umsatz.CSV"
-
-reportFile :: FilePath
-reportFile = "data/report.txt"
-
-data Transaction =
-  Transaction
-    { _type :: String
-    , _ocr :: String
-    , _amount :: Maybe Double
-    , _details :: String
+data CategoryRow =
+  CategoryRow
+    { _category :: Category
+    , _value :: (Maybe Double)
     }
-  deriving (Show)
 
+--------------------------------------------------------------------------------
+-- Functions
 -- Removes the first and last character of a string
 peel :: String -> String
 peel = tail . init
@@ -105,33 +109,42 @@ charToCategory =
   , ('u', Unknown)
   ]
 
-userQuery :: Transaction -> IO (Maybe (Category, Maybe Double))
+userQuery :: Transaction -> IO (Maybe CategoryRow)
 userQuery t = do
   mapM_ print charToCategory
   putStrLn "q: quit"
   print t
   (x:_) <- getLine
-  if x == 'q' then
-    return Nothing
-  else do
-    let cat = fromMaybe Unknown $ snd <$> find ((== x) . fst) charToCategory
-    return $ Just (cat, _amount t)
+  if x == 'q'
+    then return Nothing
+    else do
+      let cat = fromMaybe Unknown $ snd <$> find ((== x) . fst) charToCategory
+      return $ Just (CategoryRow cat (_amount t))
 
-interactiveGroup :: IO [Maybe (Category, Maybe Double)]
-interactiveGroup = readFile csvFile >>= mapM userQuery . tail . transactions
+readTransactions :: IO [Transaction]
+readTransactions = readFile csvFile >>= return . transactions
 
-categorySums :: [(Category, Maybe Double)] -> [(Category, Double)]
+interactiveGroup :: IO [Maybe CategoryRow]
+interactiveGroup = readTransactions >>= mapM userQuery . tail
+
+apPlus :: (Num a, Applicative f) => f a -> f a -> f a
+apPlus = (<*>) . ((<$>) (+))
+
+foldMaybe :: (Num a) => [Maybe a] -> Maybe a
+foldMaybe = foldr apPlus (Just 0)
+
+categorySums :: [CategoryRow] -> [CategoryRow]
 categorySums xs =
-  zip (map (fst . head) xss) (map (sum . catMaybes . map snd) xss)
+  map (\ys -> CategoryRow ((_category . head) ys) ((foldMaybe . map _value) ys)) xss
   where
-    xss = groupCategory xs
+    xss = groupByCategory xs
 
-categorySumToString :: [(Category, Double)] -> String
+categorySumToString :: [CategoryRow] -> String
 categorySumToString =
-  foldr (\(x, y) acc -> show x ++ "," ++ show y ++ "\n" ++ acc) ""
+  foldr (\(CategoryRow x y) acc -> show x ++ ": " ++ show y ++ "\n" ++ acc) ""
 
-groupCategory :: [(Category, Maybe Double)] -> [[(Category, Maybe Double)]]
-groupCategory = groupBy (on (==) fst) . sortBy (on compare fst)
+groupByCategory :: [CategoryRow] -> [[CategoryRow]]
+groupByCategory = groupBy (on (==) _category) . sortBy (on compare _category)
 
-genReport :: [(Category, Maybe Double)] -> IO ()
+genReport :: [CategoryRow] -> IO ()
 genReport = writeFile reportFile . categorySumToString . categorySums
