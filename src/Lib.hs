@@ -7,7 +7,6 @@ import Control.Monad
 import Data.Function
 import Data.List (find, groupBy, sortBy)
 import Data.List.Split (splitOn)
-import Data.Maybe
 
 import Transaction
 import Filter
@@ -33,8 +32,27 @@ reportFile = "data/report.txt"
 data CategoryRow =
   CategoryRow
     { _category :: Category
-    , _value :: (Maybe Double)
+    , _value :: Maybe Double
     }
+
+charToCategory :: [(Char, Category)]
+charToCategory =
+  [ ('m', GroceryFarmacy)
+  , ('e', EverydayLife)
+  , ('r', Restaurant)
+  , ('n', Nightlife)
+  , ('f', FastFood)
+  , ('t', Technology)
+  , ('a', Apartment)
+  , ('v', Vacation)
+  , ('o', Auto)
+  , ('s', Subscriptions)
+  , ('x', Sport)
+  , ('c', Cash)
+  , ('k', Clothes)
+  , ('h', Hairdresser)
+  , ('u', Unknown)
+  ]
 
 --------------------------------------------------------------------------------
 -- Functions
@@ -72,25 +90,6 @@ transactions = map fromString . lines
 balance :: [Transaction] -> Maybe Double
 balance = msum . map _amount
 
-charToCategory :: [(Char, Category)]
-charToCategory =
-  [ ('m', GroceryFarmacy)
-  , ('e', EverydayLife)
-  , ('r', Restaurant)
-  , ('n', Nightlife)
-  , ('f', FastFood)
-  , ('t', Technology)
-  , ('a', Apartment)
-  , ('v', Vacation)
-  , ('o', Auto)
-  , ('s', Subscriptions)
-  , ('x', Sport)
-  , ('c', Cash)
-  , ('k', Clothes)
-  , ('h', Hairdresser)
-  , ('u', Unknown)
-  ]
-
 userQuery :: Transaction -> IO (Maybe CategoryRow)
 userQuery t = do
   mapM_ print charToCategory
@@ -100,11 +99,11 @@ userQuery t = do
   if x == 'q'
     then return Nothing
     else do
-      let cat = fromMaybe Unknown $ snd <$> find ((== x) . fst) charToCategory
+      let cat = maybe Unknown snd (find ((== x) . fst) charToCategory)
       return $ Just (CategoryRow cat (_amount t))
 
 readTransactions :: IO [Transaction]
-readTransactions = readFile csvFile >>= return . transactions
+readTransactions = transactions <$> readFile csvFile
 
 interactiveGroup :: IO [Maybe CategoryRow]
 interactiveGroup = readTransactions >>= mapM userQuery . tail
@@ -128,9 +127,11 @@ groupByCategory = groupBy (on (==) _category) . sortBy (on compare _category)
 genReport :: [CategoryRow] -> IO ()
 genReport = writeFile reportFile . categorySumToString . categorySums
 
+filters :: [Filter]
 filters = [Filter "Lohn" Unknown, Filter "Kesting" Apartment]
 
+filtered :: [Transaction] -> [[Transaction]]
 filtered xs = map (\flt -> matches flt xs) filters
 
 matches :: Filter ->[Transaction] -> [Transaction]
-matches flt xs = filter (Filter.any flt) xs
+matches flt = filter (Filter.any flt)

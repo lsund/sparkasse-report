@@ -1,6 +1,7 @@
 module Filter where
 
 import qualified Data.List as L
+import Data.Foldable as T
 
 import Transaction
 
@@ -40,7 +41,7 @@ ttype :: Filter -> Transaction -> Bool
 ttype = run _ttype
 
 anyp2 :: [a -> b -> Bool] -> a -> b -> Bool
-anyp2 fs x t = or $ map (\f -> f x t) fs
+anyp2 fs x t = T.any (\f -> f x t) fs
 
 any :: Filter -> Transaction -> Bool
 any = anyp2 [ocr, details, ttype]
