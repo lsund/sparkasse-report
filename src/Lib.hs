@@ -2,6 +2,7 @@
 
 module Lib where
 
+import Control.Applicative
 import Control.Monad
 import Data.Function
 import Data.List (find, groupBy, sortBy)
@@ -9,6 +10,7 @@ import Data.List.Split (splitOn)
 import Data.Maybe
 
 import Transaction
+import Filter
 
 --------------------------------------------------------------------------------
 -- Dummy
@@ -28,26 +30,6 @@ reportFile = "data/report.txt"
 
 --------------------------------------------------------------------------------
 -- Types
-data Category
-  = GroceryFarmacy
-  | EverydayLife
-  | Restaurant
-  | Nightlife
-  | FastFood
-  | Technology
-  | Apartment
-  | SharedAccount
-  | Vacation
-  | Auto
-  | PublicTransport
-  | Subscriptions
-  | Cash
-  | Sport
-  | Clothes
-  | Hairdresser
-  | Unknown
-  deriving (Show, Eq, Ord)
-
 data CategoryRow =
   CategoryRow
     { _category :: Category
@@ -127,11 +109,8 @@ readTransactions = readFile csvFile >>= return . transactions
 interactiveGroup :: IO [Maybe CategoryRow]
 interactiveGroup = readTransactions >>= mapM userQuery . tail
 
-apPlus :: (Num a, Applicative f) => f a -> f a -> f a
-apPlus = (<*>) . ((<$>) (+))
-
 foldMaybe :: (Num a) => [Maybe a] -> Maybe a
-foldMaybe = foldr apPlus (Just 0)
+foldMaybe = foldr (liftA2 (+)) (Just 0)
 
 categorySums :: [CategoryRow] -> [CategoryRow]
 categorySums xs =
@@ -148,3 +127,10 @@ groupByCategory = groupBy (on (==) _category) . sortBy (on compare _category)
 
 genReport :: [CategoryRow] -> IO ()
 genReport = writeFile reportFile . categorySumToString . categorySums
+
+filters = [Filter "Lohn" Unknown, Filter "Kesting" Apartment]
+
+filtered xs = map (\flt -> matches flt xs) filters
+
+matches :: Filter ->[Transaction] -> [Transaction]
+matches flt xs = filter (Filter.any flt) xs
