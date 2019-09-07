@@ -3,7 +3,6 @@ module Util where
 import Data.Function.Between.Lazy
 import Control.Applicative
 
-
 flist :: [a -> b -> Bool] -> a -> b -> [Bool]
 flist fs a b = map (a ~$~ b) fs
 
