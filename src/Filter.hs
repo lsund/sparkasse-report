@@ -1,30 +1,10 @@
 module Filter where
 
 import qualified Data.List as L
-import Data.Foldable as T
-import Data.Function.Between.Lazy
 
 import Transaction
-
-data Category
-  = GroceryFarmacy
-  | EverydayLife
-  | Restaurant
-  | Nightlife
-  | FastFood
-  | Technology
-  | Apartment
-  | SharedAccount
-  | Vacation
-  | Auto
-  | PublicTransport
-  | Subscriptions
-  | Cash
-  | Sport
-  | Clothes
-  | Hairdresser
-  | Unknown
-  deriving (Show, Eq, Ord)
+import Util
+import Report
 
 data Filter = Filter { _from :: String
                      , _to :: Category }
@@ -41,11 +21,14 @@ details = run _details
 ttype :: Filter -> Transaction -> Bool
 ttype = run _ttype
 
-anyp2 :: [a -> b -> Bool] -> a -> b -> Bool
-anyp2 fs x y = T.any (\f -> f x y) fs
-
-flist :: [a -> b -> Bool] -> a -> b -> [Bool]
-flist fs a b = map (a ~$~ b) fs
-
 any :: Filter -> Transaction -> Bool
-any flt t = or $ map (flt ~$~ t) [ocr, details, ttype]
+any flt t = or $ flist [ocr, details, ttype] flt t
+
+--------------------------------------------------------------------------------
+-- Filter Transaction
+
+filtered :: [Filter] -> [Transaction] -> [[Transaction]]
+filtered flts xs = map (`matches` xs) flts
+
+matches :: Filter -> [Transaction] -> [Transaction]
+matches flt = filter (Filter.any flt)

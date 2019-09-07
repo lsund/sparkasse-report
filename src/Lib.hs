@@ -2,24 +2,26 @@
 
 module Lib where
 
-import Control.Applicative
 import Control.Monad
-import Data.Function
-import Data.List (find, groupBy, sortBy)
+import Data.List (find)
 import Data.List.Split (splitOn)
 
 import Filter
 import Transaction
+import Report
 
 --------------------------------------------------------------------------------
 -- Dummy
-dummy :: [CategoryRow]
+dummy :: [ReportRow]
 dummy =
-  [ CategoryRow Nightlife (Just 10)
-  , CategoryRow FastFood (Just 5)
-  , CategoryRow Nightlife (Just 3)
-  , CategoryRow Unknown Nothing
+  [ ReportRow Nightlife (Just 10)
+  , ReportRow FastFood (Just 5)
+  , ReportRow Nightlife (Just 3)
+  , ReportRow Unknown Nothing
   ]
+
+dummyFilters :: [Filter]
+dummyFilters = [Filter "Lohn" Unknown, Filter "Kesting" Apartment]
 
 csvFile :: FilePath
 csvFile = "data/20190818-123093569-umsatz.CSV"
@@ -29,12 +31,6 @@ reportFile = "data/report.txt"
 
 --------------------------------------------------------------------------------
 -- Types
-data CategoryRow =
-  CategoryRow
-    { _category :: Category
-    , _value :: Maybe Double
-    }
-
 charToCategory :: [(Char, Category)]
 charToCategory =
   [ ('m', GroceryFarmacy)
@@ -90,7 +86,7 @@ transactions = map fromString . lines
 balance :: [Transaction] -> Maybe Double
 balance = msum . map _amount
 
-userQuery :: Transaction -> IO (Maybe CategoryRow)
+userQuery :: Transaction -> IO (Maybe ReportRow)
 userQuery t = do
   mapM_ print charToCategory
   putStrLn "q: quit"
@@ -100,40 +96,10 @@ userQuery t = do
     then return Nothing
     else do
       let cat = maybe Unknown snd (find ((== x) . fst) charToCategory)
-      return $ Just (CategoryRow cat (_amount t))
+      return $ Just (ReportRow cat (_amount t))
 
 readTransactions :: IO [Transaction]
 readTransactions = transactions <$> readFile csvFile
 
-interactiveGroup :: IO [Maybe CategoryRow]
+interactiveGroup :: IO [Maybe ReportRow]
 interactiveGroup = readTransactions >>= mapM userQuery . tail
-
-foldMaybe :: (Num a) => [Maybe a] -> Maybe a
-foldMaybe = foldr (liftA2 (+)) (Just 0)
-
-categorySums :: [CategoryRow] -> [CategoryRow]
-categorySums xs =
-  map
-    (\ys -> CategoryRow ((_category . head) ys) ((foldMaybe . map _value) ys))
-    xss
-  where
-    xss = groupByCategory xs
-
-categorySumToString :: [CategoryRow] -> String
-categorySumToString =
-  foldr (\(CategoryRow x y) acc -> show x ++ ": " ++ show y ++ "\n" ++ acc) ""
-
-groupByCategory :: [CategoryRow] -> [[CategoryRow]]
-groupByCategory = groupBy (on (==) _category) . sortBy (on compare _category)
-
-genReport :: [CategoryRow] -> IO ()
-genReport = writeFile reportFile . categorySumToString . categorySums
-
-filters :: [Filter]
-filters = [Filter "Lohn" Unknown, Filter "Kesting" Apartment]
-
-filtered :: [Transaction] -> [[Transaction]]
-filtered xs = map (`matches` xs) filters
-
-matches :: Filter -> [Transaction] -> [Transaction]
-matches flt = filter (Filter.any flt)
