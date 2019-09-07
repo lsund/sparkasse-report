@@ -2,6 +2,7 @@ module Filter where
 
 import qualified Data.List as L
 import Data.Foldable as T
+import Data.Function.Between.Lazy
 
 import Transaction
 
@@ -41,7 +42,10 @@ ttype :: Filter -> Transaction -> Bool
 ttype = run _ttype
 
 anyp2 :: [a -> b -> Bool] -> a -> b -> Bool
-anyp2 fs x t = T.any (\f -> f x t) fs
+anyp2 fs x y = T.any (\f -> f x y) fs
+
+flist :: [a -> b -> Bool] -> a -> b -> [Bool]
+flist fs a b = map (a ~$~ b) fs
 
 any :: Filter -> Transaction -> Bool
-any = anyp2 [ocr, details, ttype]
+any flt t = or $ map (flt ~$~ t) [ocr, details, ttype]

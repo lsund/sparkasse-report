@@ -8,8 +8,8 @@ import Data.Function
 import Data.List (find, groupBy, sortBy)
 import Data.List.Split (splitOn)
 
-import Transaction
 import Filter
+import Transaction
 
 --------------------------------------------------------------------------------
 -- Dummy
@@ -113,7 +113,9 @@ foldMaybe = foldr (liftA2 (+)) (Just 0)
 
 categorySums :: [CategoryRow] -> [CategoryRow]
 categorySums xs =
-  map (\ys -> CategoryRow ((_category . head) ys) ((foldMaybe . map _value) ys)) xss
+  map
+    (\ys -> CategoryRow ((_category . head) ys) ((foldMaybe . map _value) ys))
+    xss
   where
     xss = groupByCategory xs
 
@@ -131,7 +133,7 @@ filters :: [Filter]
 filters = [Filter "Lohn" Unknown, Filter "Kesting" Apartment]
 
 filtered :: [Transaction] -> [[Transaction]]
-filtered xs = map (\flt -> matches flt xs) filters
+filtered xs = map (`matches` xs) filters
 
-matches :: Filter ->[Transaction] -> [Transaction]
+matches :: Filter -> [Transaction] -> [Transaction]
 matches flt = filter (Filter.any flt)
