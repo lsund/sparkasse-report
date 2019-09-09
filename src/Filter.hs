@@ -6,11 +6,11 @@ import Transaction
 import Util
 import Report
 
-data Filter = Filter { _from :: String
-                     , _to :: Category }
+data Filter = Filter { _match :: String
+                     , _dest :: Category }
 
 run :: (Transaction -> String) -> Filter -> Transaction -> Bool
-run f x t = _from x `L.isInfixOf` f t
+run f x t = _match x `L.isInfixOf` f t
 
 ocr :: Filter -> Transaction -> Bool
 ocr = run _ocr

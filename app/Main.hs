@@ -4,7 +4,6 @@ import Lib
 import Filter
 import Report
 
-
 --------------------------------------------------------------------------------
 -- Dummy
 
@@ -25,5 +24,10 @@ csvFile = "data/20190818-123093569-umsatz.CSV"
 reportFile :: FilePath
 reportFile = "data/report.txt"
 
+--------------------------------------------------------------------------------
+-- Program
+
 main :: IO ()
-main = readTransactions csvFile >>= print
+main = do
+    ts <- readTransactions csvFile
+    print $ filtered dummyFilters ts
