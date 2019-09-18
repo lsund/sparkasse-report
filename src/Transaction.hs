@@ -28,9 +28,6 @@ readMaybe s =
 readAmount :: [String] -> Maybe Double
 readAmount xs = (readMaybe . map commaToPeriod . peel . (!!) xs) 14
 
-balance :: [Transaction] -> Maybe Double
-balance = msum . map _amount
-
 fromString :: String -> Transaction
 fromString s =
   Transaction
@@ -42,5 +39,5 @@ fromString s =
     readToken ss = peel . (!!) ss
     split = splitOn ";" s
 
-transactions :: String -> [Transaction]
-transactions = map fromString . lines
+transactionsFromString :: String -> [Transaction]
+transactionsFromString = map fromString . lines

@@ -37,7 +37,7 @@ userQuery t = do
       return $ Just (ReportRow cat (_amount t))
 
 readTransactions :: FilePath -> IO [Transaction]
-readTransactions = fmap transactions . readFile
+readTransactions = fmap transactionsFromString . readFile
 
 interactiveGroup :: FilePath -> IO [Maybe ReportRow]
 interactiveGroup fp = readTransactions fp >>= mapM userQuery . tail

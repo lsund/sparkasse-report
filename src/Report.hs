@@ -1,5 +1,6 @@
 module Report where
 
+import Transaction
 import Util
 import Data.List (groupBy, sortBy)
 import Data.Function
@@ -31,20 +32,28 @@ data ReportRow =
     , _value :: Maybe Double
     }
 
-categorySums :: [ReportRow] -> [ReportRow]
+type Report = [ReportRow]
+
+categorySums :: [(Category, Maybe Double)] -> Report
 categorySums xs =
   map
-    (\ys -> ReportRow ((_category . head) ys) ((foldMaybe . map _value) ys))
+    (\ys -> ReportRow ((fst . head) ys) ((sumMaybes . map snd) ys))
     xss
   where
     xss = groupByCategory xs
 
-categorySumToString :: [ReportRow] -> String
-categorySumToString =
+groupByCategory :: [(Category, Maybe Double)] -> [[(Category, Maybe Double)]]
+groupByCategory = groupBy (on (==) fst) . sortBy (on compare fst)
+
+genReportInteractive :: FilePath -> [(Category, Maybe Double)]  -> IO ()
+genReportInteractive fp = writeFile fp . toString . categorySums
+
+genReport :: [([Transaction], Category)] -> Report
+genReport = map (\(ts, c) -> ReportRow c ((sumMaybes . map _amount) ts))
+
+toString :: Report -> String
+toString =
   foldr (\(ReportRow x y) acc -> show x ++ ": " ++ show y ++ "\n" ++ acc) ""
 
-groupByCategory :: [ReportRow] -> [[ReportRow]]
-groupByCategory = groupBy (on (==) _category) . sortBy (on compare _category)
-
-genReport :: FilePath -> [ReportRow] -> IO ()
-genReport fp = writeFile fp . categorySumToString . categorySums
+writeToFile :: FilePath -> Report -> IO ()
+writeToFile fp = writeFile fp . toString

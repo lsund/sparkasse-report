@@ -1,5 +1,6 @@
 module Main where
 
+import Util
 import Filter
 import Lib
 import Report
@@ -17,7 +18,11 @@ dummy =
 
 dummyFilters :: [Filter]
 dummyFilters =
-  [Filter "Lohn" _ocr Income, Filter "Kesting" _details Apartment]
+  [Filter "Helena" _details Unknown, Filter "Lohn" _ocr Income, Filter "Kesting" _details Apartment]
+
+dummyTransactions :: [Transaction]
+dummyTransactions = [Transaction "foo" "bar" (Just (-500)) "baz"
+                    , Transaction "foo" "bar" (Just 2800) "baz"]
 
 csvFile :: FilePath
 csvFile = "data/20190818-123093569-umsatz.CSV"
@@ -30,4 +35,5 @@ reportFile = "data/report.txt"
 main :: IO ()
 main = do
   ts <- readTransactions csvFile
-  print $ ts `applyAssignMany` dummyFilters
+  (Report.writeToFile reportFile . genReport . applyAssignMany ts)  dummyFilters
+  putStrLn "Report Generated"
