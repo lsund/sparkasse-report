@@ -17,7 +17,7 @@ dummy =
 
 dummyFilters :: [Filter]
 dummyFilters =
-  [Filter "Lohn" _ocr Unknown, Filter "Kesting" _details Apartment]
+  [Filter "Lohn" _ocr Income, Filter "Kesting" _details Apartment]
 
 csvFile :: FilePath
 csvFile = "data/20190818-123093569-umsatz.CSV"
@@ -30,4 +30,4 @@ reportFile = "data/report.txt"
 main :: IO ()
 main = do
   ts <- readTransactions csvFile
-  print $ matchess dummyFilters ts
+  print $ ts `applyAssignMany` dummyFilters

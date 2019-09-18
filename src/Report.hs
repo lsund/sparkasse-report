@@ -21,6 +21,7 @@ data Category
   | Sport
   | Clothes
   | Hairdresser
+  | Income
   | Unknown
   deriving (Show, Eq, Ord)
 

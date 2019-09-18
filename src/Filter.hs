@@ -8,27 +8,24 @@ import Transaction
 
 data Filter =
   Filter
-    { _match :: String
+    { _content :: String
     , _selector :: Transaction -> String
     , _dest :: Category
     }
 
-run :: Filter -> Transaction -> Bool
-run (Filter match selector _) t = match `isInfixOf` selector t
+match :: Filter -> Transaction -> Bool
+match (Filter cont selector _) t = cont `isInfixOf` selector t
 
--- run2 :: Filter -> [Transaction] -> Maybe (Transaction, Category)
--- run2 flt t =
---   if run  flt t
---     then Just (t, _dest flt)
---     else Nothing
+applyMatchMany :: [Transaction] -> [Filter] -> [[Transaction]]
+applyMatchMany ts = map (ts `applyMatch`)
 
---------------------------------------------------------------------------------
--- Filter Transaction
-matchess :: [Filter] -> [Transaction] -> [[Transaction]]
-matchess flts xs = map (`matches` xs) flts
+-- Apply a filter to a list of transactions
+-- Return the list of transactions that matches the filter
+applyMatch :: [Transaction] -> Filter -> [Transaction]
+applyMatch ts flt = filter (match flt) ts
 
-matches :: Filter -> [Transaction] -> [Transaction]
-matches flt = filter (run flt)
+applyAssignMany :: [Transaction] -> [Filter] -> [([Transaction], Category)]
+applyAssignMany ts = map (\flt -> (applyMatch ts flt, _dest flt))
 
--- stove :: Filter -> [Transaction] -> Maybe Transaction
--- stove flt ts = find (\t -> isJust (run2 flt t)) ts
+applyAssign :: [Transaction] -> Filter -> ([Transaction], Category)
+applyAssign ts flt = (applyMatch ts flt, _dest flt)
