@@ -1,7 +1,8 @@
 module Filter where
 
+import Data.List.Split (splitOn)
 import Data.List (find, isInfixOf)
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, catMaybes)
 
 import Report
 import Transaction
@@ -10,7 +11,7 @@ data Filter =
   Filter
     { _content :: String
     , _selector :: Transaction -> String
-    , _dest :: Category
+    , _dest :: String
     }
 
 match :: Filter -> Transaction -> Bool
@@ -29,3 +30,14 @@ applyAssignMany ts = map (\flt -> (applyMatch ts flt, _dest flt))
 
 applyAssign :: [Transaction] -> Filter -> ([Transaction], Category)
 applyAssign ts flt = (applyMatch ts flt, _dest flt)
+
+deserializeLine :: String -> Maybe Filter
+deserializeLine s =
+  case splitOn "," s of
+    [cont, "ocr", cat] -> Just $ Filter cont _ocr cat
+    [cont, "details", cat] -> Just $ Filter cont _details cat
+    [cont, "tag", cat] -> Just $ Filter cont _tag cat
+    _ -> Nothing
+
+deserialize :: FilePath -> IO [Filter]
+deserialize = fmap (catMaybes . map deserializeLine . lines) . readFile

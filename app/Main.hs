@@ -10,15 +10,15 @@ import Transaction
 -- Dummy
 dummy :: [ReportRow]
 dummy =
-  [ ReportRow Nightlife (Just 10)
-  , ReportRow FastFood (Just 5)
-  , ReportRow Nightlife (Just 3)
-  , ReportRow Unknown Nothing
+  [ ReportRow "Nightlife" (Just 10)
+  , ReportRow "FastFood" (Just 5)
+  , ReportRow "Nightlife" (Just 3)
+  , ReportRow "Unknown" Nothing
   ]
 
 dummyFilters :: [Filter]
 dummyFilters =
-  [Filter "Helena" _details Unknown, Filter "Lohn" _ocr Income, Filter "Kesting" _details Apartment]
+  [Filter "Helena" _details "Unknown", Filter "Lohn" _ocr "Income", Filter "Kesting" _details "Apartment"]
 
 dummyTransactions :: [Transaction]
 dummyTransactions = [Transaction "foo" "bar" (Just (-500)) "baz"
@@ -35,5 +35,6 @@ reportFile = "data/report.txt"
 main :: IO ()
 main = do
   ts <- readTransactions csvFile
-  (Report.writeToFile reportFile . genReport . applyAssignMany ts)  dummyFilters
+  filters <- Filter.deserialize "data/filters.csv"
+  (Report.writeToFile reportFile . genReport . applyAssignMany ts)  filters
   putStrLn "Report Generated"
