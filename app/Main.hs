@@ -1,12 +1,12 @@
 module Main where
 
-import Lib
 import Filter
+import Lib
 import Report
+import Transaction
 
 --------------------------------------------------------------------------------
 -- Dummy
-
 dummy :: [ReportRow]
 dummy =
   [ ReportRow Nightlife (Just 10)
@@ -16,7 +16,8 @@ dummy =
   ]
 
 dummyFilters :: [Filter]
-dummyFilters = [Filter "Lohn" Unknown, Filter "Kesting" Apartment]
+dummyFilters =
+  [Filter "Lohn" _ocr Unknown, Filter "Kesting" _details Apartment]
 
 csvFile :: FilePath
 csvFile = "data/20190818-123093569-umsatz.CSV"
@@ -26,8 +27,7 @@ reportFile = "data/report.txt"
 
 --------------------------------------------------------------------------------
 -- Program
-
 main :: IO ()
 main = do
-    ts <- readTransactions csvFile
-    print $ filtered dummyFilters ts
+  ts <- readTransactions csvFile
+  print $ matchess dummyFilters ts

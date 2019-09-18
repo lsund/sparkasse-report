@@ -1,34 +1,34 @@
 module Filter where
 
-import qualified Data.List as L
+import Data.List (find, isInfixOf)
+import Data.Maybe (isJust)
 
-import Transaction
-import Util
 import Report
+import Transaction
 
-data Filter = Filter { _match :: String
-                     , _dest :: Category }
+data Filter =
+  Filter
+    { _match :: String
+    , _selector :: Transaction -> String
+    , _dest :: Category
+    }
 
-run :: (Transaction -> String) -> Filter -> Transaction -> Bool
-run f x t = _match x `L.isInfixOf` f t
+run :: Filter -> Transaction -> Bool
+run (Filter match selector _) t = match `isInfixOf` selector t
 
-ocr :: Filter -> Transaction -> Bool
-ocr = run _ocr
-
-details :: Filter -> Transaction -> Bool
-details = run _details
-
-ttype :: Filter -> Transaction -> Bool
-ttype = run _ttype
-
-any :: Filter -> Transaction -> Bool
-any flt t = or $ flist [ocr, details, ttype] flt t
+-- run2 :: Filter -> [Transaction] -> Maybe (Transaction, Category)
+-- run2 flt t =
+--   if run  flt t
+--     then Just (t, _dest flt)
+--     else Nothing
 
 --------------------------------------------------------------------------------
 -- Filter Transaction
-
-filtered :: [Filter] -> [Transaction] -> [[Transaction]]
-filtered flts xs = map (`matches` xs) flts
+matchess :: [Filter] -> [Transaction] -> [[Transaction]]
+matchess flts xs = map (`matches` xs) flts
 
 matches :: Filter -> [Transaction] -> [Transaction]
-matches flt = filter (Filter.any flt)
+matches flt = filter (run flt)
+
+-- stove :: Filter -> [Transaction] -> Maybe Transaction
+-- stove flt ts = find (\t -> isJust (run2 flt t)) ts

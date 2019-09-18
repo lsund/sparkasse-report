@@ -5,7 +5,7 @@ import Data.List.Split (splitOn)
 
 data Transaction =
   Transaction
-    { _ttype :: String
+    { _tag :: String
     , _ocr :: String
     , _amount :: Maybe Double
     , _details :: String
