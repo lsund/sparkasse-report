@@ -1,8 +1,8 @@
 module Filter where
 
 import Data.List.Split (splitOn)
-import Data.List (find, isInfixOf)
-import Data.Maybe (isJust, catMaybes)
+import Data.List (isInfixOf)
+import Data.Maybe (catMaybes)
 
 import Report
 import Transaction

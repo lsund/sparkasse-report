@@ -1,6 +1,5 @@
 module Transaction where
 
-import Control.Monad
 import Data.List.Split (splitOn)
 
 data Transaction =

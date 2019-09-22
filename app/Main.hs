@@ -1,6 +1,5 @@
 module Main where
 
-import Util
 import Filter
 import Lib
 import Report
