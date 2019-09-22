@@ -1,9 +1,12 @@
 module Main where
 
+import System.Directory (doesFileExist)
+import Control.Monad
 import Filter
 import Lib
 import Report
 import Transaction
+import Control.Monad.Extra (allM)
 
 --------------------------------------------------------------------------------
 -- Dummy
@@ -27,13 +30,21 @@ csvFile :: FilePath
 csvFile = "data/20190818-123093569-umsatz.CSV"
 
 reportFile :: FilePath
-reportFile = "data/report.txt"
+reportFile = "data/report.csv"
+
+filterFile :: FilePath
+filterFile = "data/filters.csv"
 
 --------------------------------------------------------------------------------
 -- Program
 main :: IO ()
 main = do
-  ts <- readTransactions csvFile
-  filters <- Filter.deserialize "data/filters.csv"
-  (Report.writeToFile reportFile . genReport . applyAssignMany ts)  filters
-  putStrLn "Report Generated"
+  inputFilesExist <- allM doesFileExist [reportFile, filterFile]
+  if inputFilesExist
+    then do
+        ts <- readTransactions csvFile
+        filters <- Filter.deserialize filterFile
+        (Report.writeToFile reportFile . genReport . applyAssignMany ts)  filters
+        putStrLn "Report Generated"
+    else
+        putStrLn $ reportFile ++ " or " ++ filterFile ++ " does not exist."

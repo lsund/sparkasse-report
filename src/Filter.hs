@@ -2,7 +2,7 @@ module Filter where
 
 import Data.List.Split (splitOn)
 import Data.List (isInfixOf)
-import Data.Maybe (catMaybes)
+import Data.Maybe (mapMaybe)
 
 import Report
 import Transaction
@@ -40,4 +40,4 @@ deserializeLine s =
     _ -> Nothing
 
 deserialize :: FilePath -> IO [Filter]
-deserialize = fmap (catMaybes . map deserializeLine . lines) . readFile
+deserialize = fmap (mapMaybe deserializeLine . lines) . readFile
