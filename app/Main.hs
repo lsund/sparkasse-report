@@ -1,7 +1,6 @@
 module Main where
 
 import System.Directory (doesFileExist)
-import Control.Monad
 import Filter
 import Lib
 import Report
