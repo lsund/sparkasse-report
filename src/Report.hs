@@ -3,11 +3,12 @@ module Report where
 import Data.Aeson
 import Data.Function
 import Data.List (groupBy, sortBy)
+import Data.Text (Text)
 
 import Transaction
 import Util
 
-type Category = String
+type Category = Text
 
 data CategorySum =
   CategorySum

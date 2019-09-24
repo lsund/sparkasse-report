@@ -1,14 +1,17 @@
+{-# Language OverloadedStrings #-}
 module Transaction where
 
 import Data.List.Split (splitOn)
 import Data.Aeson
+import Data.Text (Text)
+import qualified Data.Text as T
 
 data Transaction =
   Transaction
-    { _tag :: String
-    , _ocr :: String
+    { _tag :: Text
+    , _ocr :: Text
     , _amount :: Maybe Double
-    , _details :: String
+    , _details :: Text
     }
   deriving (Show)
 
@@ -40,8 +43,8 @@ fromString s =
     (readAmount split)
     (readToken split 11)
   where
-    readToken ss = peel . (!!) ss
-    split = splitOn ";" s
+     readToken ss = T.pack . peel . (!!) ss
+     split = splitOn ";" s
 
 transactionsFromString :: String -> [Transaction]
 transactionsFromString = map fromString . lines

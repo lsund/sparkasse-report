@@ -26,6 +26,7 @@ dependencies:
 - directory
 - extra
 - aeson
+- text
 
 library:
   source-dirs: src

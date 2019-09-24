@@ -1,23 +1,24 @@
 module Filter where
 
-import Data.List (isInfixOf)
 import Data.List.Split (splitOn)
 import Data.Maybe (mapMaybe)
+import Data.Text (Text)
+import qualified Data.Text as T
 
 import Report
 import Transaction
 
 data Filter =
   Filter
-    { _content :: String
-    , _selector :: Transaction -> String
-    , _dest :: String
+    { _content :: Text
+    , _selector :: Transaction -> Text
+    , _dest :: Text
     }
 
 type Predicate = (Filter -> Transaction -> Bool)
 
 match :: Predicate
-match (Filter cont selector _) t = cont `isInfixOf` selector t
+match (Filter cont selector _) t = cont `T.isInfixOf` selector t
 
 nomatch :: Predicate
 nomatch flt = not . match flt
@@ -50,7 +51,7 @@ deserialize = fmap (mapMaybe deserializeLine . lines) . readFile
   where
     deserializeLine :: String -> Maybe Filter
     deserializeLine s =
-      case splitOn "," s of
+      case map T.pack $ splitOn "," s of
         [cont, "ocr", cat] -> Just $ Filter cont _ocr cat
         [cont, "details", cat] -> Just $ Filter cont _details cat
         [cont, "tag", cat] -> Just $ Filter cont _tag cat
