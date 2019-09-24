@@ -45,7 +45,9 @@ main = do
         ts <- readTransactions csvFile
         filters <- Filter.deserialize filterFile
         --
-        print $ (apply match ts) filters
+        print $ length $ (apply match ts) filters
+        print $ length $ (applyAnd nomatch ts) filters
+        print $ length ts
         --
         -- (Report.writeToFile reportFile . genReport . applyAssign match ts)  filters
         -- putStrLn "Report Generated"

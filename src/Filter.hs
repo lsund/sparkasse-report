@@ -14,31 +14,36 @@ data Filter =
     , _dest :: String
     }
 
-match :: Filter -> Transaction -> Bool
+type Predicate = (Filter -> Transaction -> Bool)
+
+match :: Predicate
 match (Filter cont selector _) t = cont `isInfixOf` selector t
 
-applyNoMatch :: [Transaction] -> Filter -> [Transaction]
-applyNoMatch = applyPred (\x y -> not $ match x y)
+nomatch :: Predicate
+nomatch flt = not . match flt
+
+-- The list of transactions that satisfies all filters in the list
+applyAnd :: Predicate -> [Transaction] -> [Filter] -> [Transaction]
+applyAnd p ts flts = filter (\t -> all (`p` t) flts) ts
 
 -- Apply a filter to a list of transactions
--- Return the list of transactions that matches the filter
-applyPred ::
-     (Filter -> Transaction -> Bool) -> [Transaction] -> Filter -> [Transaction]
+-- Return the list of transactions that satisfies the predicate
+applyPred :: Predicate -> [Transaction] -> Filter -> [Transaction]
 applyPred p ts flt = filter (p flt) ts
 
-apply ::
-     (Filter -> Transaction -> Bool)
-  -> [Transaction]
-  -> [Filter]
-  -> [[Transaction]]
+-- applyPred but with a list of filters
+apply :: Predicate -> [Transaction] -> [Filter] -> [[Transaction]]
 apply p ts = map (applyPred p ts)
 
+-- Like apply but associates each transactionlist with the corresponding category
 applyAssign ::
-     (Filter -> Transaction -> Bool)
-  -> [Transaction]
-  -> [Filter]
-  -> [([Transaction], Category)]
+     Predicate -> [Transaction] -> [Filter] -> [([Transaction], Category)]
 applyAssign p ts = map (\flt -> (applyPred p ts flt, _dest flt))
+
+assignAndUnmatched ::
+     [Transaction] -> [Filter] -> ([([Transaction], Category)], [Transaction])
+assignAndUnmatched ts flts =
+  (applyAssign match ts flts, applyAnd nomatch ts flts)
 
 deserializeLine :: String -> Maybe Filter
 deserializeLine s =
