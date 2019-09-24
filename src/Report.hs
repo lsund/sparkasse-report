@@ -1,7 +1,6 @@
 {-# Language OverloadedStrings #-}
 module Report where
 
-import Data.ByteString.Lazy (ByteString)
 import Data.Aeson
 import Data.Function
 import Data.List (groupBy, sortBy)

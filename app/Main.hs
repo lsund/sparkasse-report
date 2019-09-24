@@ -54,4 +54,5 @@ main = do
       let reportJSON =
             (encode . fromFilterResult . assignedAndUnmatched ts) filters
       BS.writeFile reportFile reportJSON
+      putStrLn $ reportFile ++ " was written"
     else putStrLn $ "A file in " ++ show requiredFiles
