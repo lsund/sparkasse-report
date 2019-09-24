@@ -1,5 +1,9 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Filter where
 
+import Control.Monad
+import Data.Aeson
 import Data.List.Split (splitOn)
 import Data.Maybe (mapMaybe)
 import Data.Text (Text)
@@ -11,14 +15,28 @@ import Transaction
 data Filter =
   Filter
     { _content :: Text
-    , _selector :: Transaction -> Text
     , _dest :: Text
+    , _selector :: Transaction -> Text
     }
+
+instance FromJSON Filter where
+  parseJSON (Object o) =
+    o .: "content" >>=
+    (\cont ->
+       o .: "category" >>=
+       (\cat -> o .: "selector" >>=
+        (return . Filter cont cat . decodeSelector)))
+  parseJSON _ = mzero
+
+decodeSelector :: Text -> (Transaction -> Text)
+decodeSelector "ocr" = _ocr
+decodeSelector "tag" = _tag
+decodeSelector _ = _details
 
 type Predicate = (Filter -> Transaction -> Bool)
 
 match :: Predicate
-match (Filter cont selector _) t = cont `T.isInfixOf` selector t
+match (Filter cont _ selector) t = cont `T.isInfixOf` selector t
 
 nomatch :: Predicate
 nomatch flt = not . match flt
@@ -45,14 +63,3 @@ assignedAndUnmatched ::
      [Transaction] -> [Filter] -> ([([Transaction], Category)], [Transaction])
 assignedAndUnmatched ts flts =
   (applyAssign match ts flts, applyAnd nomatch ts flts)
-
-deserialize :: FilePath -> IO [Filter]
-deserialize = fmap (mapMaybe deserializeLine . lines) . readFile
-  where
-    deserializeLine :: String -> Maybe Filter
-    deserializeLine s =
-      case map T.pack $ splitOn "," s of
-        [cont, "ocr", cat] -> Just $ Filter cont _ocr cat
-        [cont, "details", cat] -> Just $ Filter cont _details cat
-        [cont, "tag", cat] -> Just $ Filter cont _tag cat
-        _ -> Nothing

@@ -19,13 +19,6 @@ dummy =
   , CategorySum "Unknown" Nothing
   ]
 
-dummyFilters :: [Filter]
-dummyFilters =
-  [ Filter "Helena" _details "Unknown"
-  , Filter "Lohn" _ocr "Income"
-  , Filter "Kesting" _details "Apartment"
-  ]
-
 dummyTransactions :: [Transaction]
 dummyTransactions =
   [ Transaction "foo" "bar" (Just (-500)) "baz"
@@ -39,7 +32,7 @@ reportFile :: FilePath
 reportFile = "data/report.json"
 
 filterFile :: FilePath
-filterFile = "data/filters.csv"
+filterFile = "data/filters.json"
 
 --------------------------------------------------------------------------------
 -- Program
@@ -50,9 +43,13 @@ main = do
   if inputFilesExist
     then do
       ts <- readTransactions csvFile
-      filters <- Filter.deserialize filterFile
-      let reportJSON =
-            (encode . fromFilterResult . assignedAndUnmatched ts) filters
-      BS.writeFile reportFile reportJSON
-      putStrLn $ reportFile ++ " was written"
+      jsonStr <- BS.readFile filterFile
+      let mfs = decode jsonStr :: Maybe [Filter]
+      case mfs of
+        Just fs -> do
+          let reportJSON =
+                (encode . fromFilterResult . assignedAndUnmatched ts) fs
+          BS.writeFile reportFile reportJSON
+          putStrLn $ "Success: wrote '"  ++ reportFile ++ "'"
+        Nothing -> putStrLn $ "Error: Could not parse '" ++ filterFile ++ "'"
     else putStrLn $ "A file in " ++ show requiredFiles
