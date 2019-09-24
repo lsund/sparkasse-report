@@ -28,6 +28,7 @@ dependencies:
 - aeson
 - text
 - bytestring
+- optparse-applicative
 
 library:
   source-dirs: src

@@ -4,52 +4,64 @@ import Control.Monad.Extra (allM)
 import Data.Aeson
 import qualified Data.ByteString.Lazy as BS
 import Filter
-import Lib
+import Options.Applicative
 import Report
 import System.Directory (doesFileExist)
 import Transaction
 
---------------------------------------------------------------------------------
--- Dummy
-dummy :: [CategorySum]
-dummy =
-  [ CategorySum "Nightlife" (Just 10)
-  , CategorySum "FastFood" (Just 5)
-  , CategorySum "Nightlife" (Just 3)
-  , CategorySum "Unknown" Nothing
-  ]
+readTransactions :: FilePath -> IO [Transaction]
+readTransactions = fmap transactionsFromString . readFile
 
-dummyTransactions :: [Transaction]
-dummyTransactions =
-  [ Transaction "foo" "bar" (Just (-500)) "baz"
-  , Transaction "foo" "bar" (Just 2800) "baz"
-  ]
+data OptSpec =
+  OptSpec
+    { _input :: String
+    , _filterSpec :: String
+    , _output :: Maybe String
+    }
 
-csvFile :: FilePath
-csvFile = "data/20190818-123093569-umsatz.CSV"
+parseOptSpec :: Parser OptSpec
+parseOptSpec =
+  OptSpec <$>
+  strOption
+    (long "input" <> short 'i' <> metavar "FILE" <>
+     help "Input file (exported sparkasse csv)") <*>
+  strOption
+    (long "filter-spec" <> short 'f' <> metavar "FILE" <>
+     help "File containing filter specificatation") <*>
+  (optional $
+   strOption
+     (long "output" <> short 'o' <> metavar "FILE" <>
+      help
+        ("Output file (exported sparkasse csv). " ++
+         "If omitted, print to stdout")))
 
-reportFile :: FilePath
-reportFile = "data/report.json"
-
-filterFile :: FilePath
-filterFile = "data/filters.json"
-
---------------------------------------------------------------------------------
--- Program
-main :: IO ()
-main = do
-  let requiredFiles = [csvFile, filterFile]
+run :: OptSpec -> IO ()
+run (OptSpec input filterSpec output) = do
+  let requiredFiles = [input, filterSpec]
   inputFilesExist <- allM doesFileExist requiredFiles
   if inputFilesExist
     then do
-      ts <- readTransactions csvFile
-      jsonStr <- BS.readFile filterFile
+      ts <- readTransactions input
+      jsonStr <- BS.readFile filterSpec
       let mfs = decode jsonStr :: Maybe [Filter]
       case mfs of
         Just fs -> do
           let reportJSON =
                 (encode . fromFilterResult . assignedAndUnmatched ts) fs
-          BS.writeFile reportFile reportJSON
-          putStrLn $ "Success: wrote '"  ++ reportFile ++ "'"
-        Nothing -> putStrLn $ "Error: Could not parse '" ++ filterFile ++ "'"
-    else putStrLn $ "A file in " ++ show requiredFiles
+          case output of
+            Just outputFile -> do
+              BS.writeFile outputFile reportJSON
+              putStrLn $ "Success: wrote '" ++ outputFile ++ "'"
+            Nothing -> BS.putStrLn reportJSON
+        Nothing -> putStrLn $ "Error: Could not parse '" ++ filterSpec ++ "'"
+    else putStrLn $ "A file in " ++ show requiredFiles ++ " was not found."
+
+main :: IO ()
+main = run =<< execParser opts
+  where
+    opts =
+      info
+        (parseOptSpec <**> helper)
+        (fullDesc <>
+         progDesc "Convert a Sparkasse CSV file into something usable" <>
+         header "sparkasse-report")
