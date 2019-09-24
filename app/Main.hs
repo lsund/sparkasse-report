@@ -28,12 +28,12 @@ parseOptSpec =
   strOption
     (long "filter-spec" <> short 'f' <> metavar "FILE" <>
      help "File containing filter specificatation") <*>
-  (optional $
-   strOption
-     (long "output" <> short 'o' <> metavar "FILE" <>
-      help
-        ("Output file (exported sparkasse csv). " ++
-         "If omitted, print to stdout")))
+  optional
+    (strOption
+       (long "output" <> short 'o' <> metavar "FILE" <>
+        help
+          ("Output file (exported sparkasse csv). " ++
+           "If omitted, print to stdout")))
 
 run :: OptSpec -> IO ()
 run (OptSpec input filterSpec output) = do
@@ -52,7 +52,7 @@ run (OptSpec input filterSpec output) = do
             Just outputFile -> do
               BS.writeFile outputFile reportJSON
               putStrLn $ "Success: wrote '" ++ outputFile ++ "'"
-            Nothing -> BS.putStrLn reportJSON
+            Nothing -> BS.putStr reportJSON
         Nothing -> putStrLn $ "Error: Could not parse '" ++ filterSpec ++ "'"
     else putStrLn $ "A file in " ++ show requiredFiles ++ " was not found."
 
