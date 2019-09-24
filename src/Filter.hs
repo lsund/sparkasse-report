@@ -4,8 +4,6 @@ module Filter where
 
 import Control.Monad
 import Data.Aeson
-import Data.List.Split (splitOn)
-import Data.Maybe (mapMaybe)
 import Data.Text (Text)
 import qualified Data.Text as T
 
@@ -31,7 +29,7 @@ instance FromJSON Filter where
 decodeSelector :: Text -> (Transaction -> Text)
 decodeSelector "ocr" = _ocr
 decodeSelector "tag" = _tag
-decodeSelector _ = _details
+decodeSelector _ = _transactor
 
 type Predicate = (Filter -> Transaction -> Bool)
 

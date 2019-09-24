@@ -11,13 +11,13 @@ data Transaction =
     { _tag :: Text
     , _ocr :: Text
     , _amount :: Maybe Double
-    , _details :: Text
+    , _transactor :: Text
     }
   deriving (Show)
 
 instance ToJSON Transaction where
   toJSON (Transaction t o a d) =
-    object ["tag" .= t, "ocr" .= o, "amount" .= a, "details" .= d]
+    object ["tag" .= t, "ocr" .= o, "amount" .= a, "transactor" .= d]
 
 peel :: String -> String
 peel = tail . init
