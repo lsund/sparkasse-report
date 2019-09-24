@@ -1,5 +1,7 @@
+{-# Language OverloadedStrings #-}
 module Report where
 
+import Data.ByteString.Lazy (ByteString)
 import Data.Aeson
 import Data.Function
 import Data.List (groupBy, sortBy)
@@ -29,7 +31,7 @@ data Report =
 instance ToJSON Report where
   toJSON (Report cs ut) =
     object
-        ["foo" .= cs, "bar" .= ut]
+        ["categorySums" .= cs, "unassignedTransactions" .= ut]
 
 categorySums :: [(Category, Maybe Double)] -> [CategorySum]
 categorySums xs =
@@ -40,16 +42,6 @@ categorySums xs =
 groupByCategory :: [(Category, Maybe Double)] -> [[(Category, Maybe Double)]]
 groupByCategory = groupBy (on (==) fst) . sortBy (on compare fst)
 
--- genReportInteractive :: FilePath -> [(Category, Maybe Double)] -> IO ()
--- genReportInteractive fp = writeFile fp . toCsv . categorySums
--- TODO generate json here instead of report
-
 fromFilterResult :: ([([Transaction], Category)], [Transaction]) -> Report
 fromFilterResult (at, ut) =
   Report (map (\(ts, c) -> CategorySum c ((sumMaybes . map _amount) ts)) at) ut
-
--- writeToFile :: FilePath -> Report -> IO ()
--- writeToFile fp = writeFile fp . toCsv
-
--- serialize :: Report -> ByteString
-serialize r = encode r
