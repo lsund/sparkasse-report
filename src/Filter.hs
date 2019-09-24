@@ -7,13 +7,13 @@ import Data.Aeson
 import Data.Text (Text)
 import qualified Data.Text as T
 
-import Report
+import Report (Category)
 import Transaction
 
 data Filter =
   Filter
     { _content :: Text
-    , _dest :: Text
+    , _category :: Text
     , _selector :: Transaction -> Text
     }
 
@@ -55,7 +55,7 @@ apply p ts = map (applyPred p ts)
 -- Like apply but associates each transactionlist with the corresponding category
 applyAssign ::
      Predicate -> [Transaction] -> [Filter] -> [([Transaction], Category)]
-applyAssign p ts = map (\flt -> (applyPred p ts flt, _dest flt))
+applyAssign p ts = map (\flt -> (applyPred p ts flt, _category flt))
 
 assignedAndUnmatched ::
      [Transaction] -> [Filter] -> ([([Transaction], Category)], [Transaction])
