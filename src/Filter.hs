@@ -1,7 +1,7 @@
 module Filter where
 
-import Data.List.Split (splitOn)
 import Data.List (isInfixOf)
+import Data.List.Split (splitOn)
 import Data.Maybe (mapMaybe)
 
 import Report
@@ -17,19 +17,28 @@ data Filter =
 match :: Filter -> Transaction -> Bool
 match (Filter cont selector _) t = cont `isInfixOf` selector t
 
-applyMatchMany :: [Transaction] -> [Filter] -> [[Transaction]]
-applyMatchMany ts = map (ts `applyMatch`)
+applyNoMatch :: [Transaction] -> Filter -> [Transaction]
+applyNoMatch = applyPred (\x y -> not $ match x y)
 
 -- Apply a filter to a list of transactions
 -- Return the list of transactions that matches the filter
-applyMatch :: [Transaction] -> Filter -> [Transaction]
-applyMatch ts flt = filter (match flt) ts
+applyPred ::
+     (Filter -> Transaction -> Bool) -> [Transaction] -> Filter -> [Transaction]
+applyPred p ts flt = filter (p flt) ts
 
-applyAssignMany :: [Transaction] -> [Filter] -> [([Transaction], Category)]
-applyAssignMany ts = map (\flt -> (applyMatch ts flt, _dest flt))
+apply ::
+     (Filter -> Transaction -> Bool)
+  -> [Transaction]
+  -> [Filter]
+  -> [[Transaction]]
+apply p ts = map (applyPred p ts)
 
-applyAssign :: [Transaction] -> Filter -> ([Transaction], Category)
-applyAssign ts flt = (applyMatch ts flt, _dest flt)
+applyAssign ::
+     (Filter -> Transaction -> Bool)
+  -> [Transaction]
+  -> [Filter]
+  -> [([Transaction], Category)]
+applyAssign p ts = map (\flt -> (applyPred p ts flt, _dest flt))
 
 deserializeLine :: String -> Maybe Filter
 deserializeLine s =

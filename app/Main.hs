@@ -38,12 +38,16 @@ filterFile = "data/filters.csv"
 -- Program
 main :: IO ()
 main = do
-  inputFilesExist <- allM doesFileExist [reportFile, filterFile]
+  let requiredFiles = [csvFile, filterFile]
+  inputFilesExist <- allM doesFileExist requiredFiles
   if inputFilesExist
     then do
         ts <- readTransactions csvFile
         filters <- Filter.deserialize filterFile
-        (Report.writeToFile reportFile . genReport . applyAssignMany ts)  filters
-        putStrLn "Report Generated"
+        --
+        print $ (apply match ts) filters
+        --
+        -- (Report.writeToFile reportFile . genReport . applyAssign match ts)  filters
+        -- putStrLn "Report Generated"
     else
-        putStrLn $ reportFile ++ " or " ++ filterFile ++ " does not exist."
+        putStrLn $ "A file in " ++ show requiredFiles
