@@ -25,6 +25,7 @@ dependencies:
 - between
 - directory
 - extra
+- aeson
 
 library:
   source-dirs: src

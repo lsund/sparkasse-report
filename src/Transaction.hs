@@ -1,6 +1,7 @@
 module Transaction where
 
 import Data.List.Split (splitOn)
+import Data.Aeson
 
 data Transaction =
   Transaction
@@ -10,6 +11,10 @@ data Transaction =
     , _details :: String
     }
   deriving (Show)
+
+instance ToJSON Transaction where
+  toJSON (Transaction t o a d) =
+    object ["tag" .= t, "ocr" .= o, "amount" .= a, "details" .= d]
 
 peel :: String -> String
 peel = tail . init

@@ -9,12 +9,12 @@ import Control.Monad.Extra (allM)
 
 --------------------------------------------------------------------------------
 -- Dummy
-dummy :: [ReportRow]
+dummy :: [CategorySum]
 dummy =
-  [ ReportRow "Nightlife" (Just 10)
-  , ReportRow "FastFood" (Just 5)
-  , ReportRow "Nightlife" (Just 3)
-  , ReportRow "Unknown" Nothing
+  [ CategorySum "Nightlife" (Just 10)
+  , CategorySum "FastFood" (Just 5)
+  , CategorySum "Nightlife" (Just 3)
+  , CategorySum "Unknown" Nothing
   ]
 
 dummyFilters :: [Filter]
@@ -48,6 +48,7 @@ main = do
         print $ length $ (apply match ts) filters
         print $ length $ (applyAnd nomatch ts) filters
         print $ length ts
+        print $ (Report.serialize . fromFilterResult . assignedAndUnmatched ts)  filters
         --
         -- (Report.writeToFile reportFile . genReport . applyAssign match ts)  filters
         -- putStrLn "Report Generated"

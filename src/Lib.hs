@@ -24,7 +24,7 @@ charToCategory =
   , ('u', "Unknown")
   ]
 
-userQuery :: Transaction -> IO (Maybe ReportRow)
+userQuery :: Transaction -> IO (Maybe CategorySum)
 userQuery t = do
   mapM_ print charToCategory
   putStrLn "q: quit"
@@ -34,10 +34,10 @@ userQuery t = do
     then return Nothing
     else do
       let cat = maybe "Unknown" snd (find ((== x) . fst) charToCategory)
-      return $ Just (ReportRow cat (_amount t))
+      return $ Just (CategorySum cat (_amount t))
 
 readTransactions :: FilePath -> IO [Transaction]
 readTransactions = fmap transactionsFromString . readFile
 
-interactiveGroup :: FilePath -> IO [Maybe ReportRow]
+interactiveGroup :: FilePath -> IO [Maybe CategorySum]
 interactiveGroup fp = readTransactions fp >>= mapM userQuery . tail

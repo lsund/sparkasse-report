@@ -1,40 +1,54 @@
 module Report where
 
+import Data.Aeson
 import Data.Function
 import Data.List (groupBy, sortBy)
+
 import Transaction
 import Util
 
 type Category = String
 
-data ReportRow =
-  ReportRow
+data CategorySum =
+  CategorySum
     { _category :: Category
     , _value :: Maybe Double
     }
 
-type Report = [ReportRow]
+instance ToJSON CategorySum where
+  toJSON (CategorySum c v) =
+    object [ "category" .= c, "value" .= v ]
 
-toCsv :: Report -> String
-toCsv =
-  foldr
-    (\(ReportRow cat val) acc -> cat <> "," <> showMaybe val <> "\n" <> acc)
-    ""
+data Report =
+  Report
+    { _categorySums :: [CategorySum]
+    , _unassignedTransactions :: [Transaction]
+    }
 
-categorySums :: [(Category, Maybe Double)] -> Report
+instance ToJSON Report where
+  toJSON (Report cs ut) =
+    object
+        ["foo" .= cs, "bar" .= ut]
+
+categorySums :: [(Category, Maybe Double)] -> [CategorySum]
 categorySums xs =
-  map (\ys -> ReportRow ((fst . head) ys) ((sumMaybes . map snd) ys)) xss
+  map (\ys -> CategorySum ((fst . head) ys) ((sumMaybes . map snd) ys)) xss
   where
     xss = groupByCategory xs
 
 groupByCategory :: [(Category, Maybe Double)] -> [[(Category, Maybe Double)]]
 groupByCategory = groupBy (on (==) fst) . sortBy (on compare fst)
 
-genReportInteractive :: FilePath -> [(Category, Maybe Double)] -> IO ()
-genReportInteractive fp = writeFile fp . toCsv . categorySums
+-- genReportInteractive :: FilePath -> [(Category, Maybe Double)] -> IO ()
+-- genReportInteractive fp = writeFile fp . toCsv . categorySums
+-- TODO generate json here instead of report
 
-genReport :: [([Transaction], Category)] -> Report
-genReport = map (\(ts, c) -> ReportRow c ((sumMaybes . map _amount) ts))
+fromFilterResult :: ([([Transaction], Category)], [Transaction]) -> Report
+fromFilterResult (at, ut) =
+  Report (map (\(ts, c) -> CategorySum c ((sumMaybes . map _amount) ts)) at) ut
 
-writeToFile :: FilePath -> Report -> IO ()
-writeToFile fp = writeFile fp . toCsv
+-- writeToFile :: FilePath -> Report -> IO ()
+-- writeToFile fp = writeFile fp . toCsv
+
+-- serialize :: Report -> ByteString
+serialize r = encode r

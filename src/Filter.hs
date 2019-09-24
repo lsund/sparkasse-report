@@ -40,18 +40,18 @@ applyAssign ::
      Predicate -> [Transaction] -> [Filter] -> [([Transaction], Category)]
 applyAssign p ts = map (\flt -> (applyPred p ts flt, _dest flt))
 
-assignAndUnmatched ::
+assignedAndUnmatched ::
      [Transaction] -> [Filter] -> ([([Transaction], Category)], [Transaction])
-assignAndUnmatched ts flts =
+assignedAndUnmatched ts flts =
   (applyAssign match ts flts, applyAnd nomatch ts flts)
-
-deserializeLine :: String -> Maybe Filter
-deserializeLine s =
-  case splitOn "," s of
-    [cont, "ocr", cat] -> Just $ Filter cont _ocr cat
-    [cont, "details", cat] -> Just $ Filter cont _details cat
-    [cont, "tag", cat] -> Just $ Filter cont _tag cat
-    _ -> Nothing
 
 deserialize :: FilePath -> IO [Filter]
 deserialize = fmap (mapMaybe deserializeLine . lines) . readFile
+  where
+    deserializeLine :: String -> Maybe Filter
+    deserializeLine s =
+      case splitOn "," s of
+        [cont, "ocr", cat] -> Just $ Filter cont _ocr cat
+        [cont, "details", cat] -> Just $ Filter cont _details cat
+        [cont, "tag", cat] -> Just $ Filter cont _tag cat
+        _ -> Nothing
