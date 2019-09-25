@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-
 module Filter where
 
 import Control.Monad
@@ -61,13 +60,17 @@ applyPred p ts flt = filter (p flt) ts
 apply :: Predicate -> [Transaction] -> [Filter] -> [[Transaction]]
 apply p ts = map (applyPred p ts)
 
+categorizeTransactions :: ([Transaction], Category) -> CategorizedTransaction
+categorizeTransactions (ts, c) =
+  CategorizedTransaction c ((sumMaybes . map _tAmount) ts)
+
 -- Like apply but associates each transactionlist with the corresponding category
 applyAssign ::
      Predicate -> [Transaction] -> [Filter] -> [CategorizedTransaction]
-applyAssign p ts flts =
+applyAssign p ts =
   map
-    (\(ts, c) -> CategorizedTransaction c ((sumMaybes . map _tAmount) ts))
-    (map (\flt -> (applyPred p ts flt, _fCategory flt)) flts)
+    (categorizeTransactions .
+     (\flt@(Filter _ cat _) -> (applyPred p ts flt, cat)))
 
 assignedAndUnmatched :: [Transaction] -> [Filter] -> Report
 assignedAndUnmatched ts flts =
