@@ -6,14 +6,24 @@ import Control.Monad
 import Data.Aeson
 import Data.Text (Text)
 import qualified Data.Text as T
+import Report
+import Util
 
-import Report (Category)
 import Transaction
+  ( CategorizedTransaction(..)
+  , CategorizedTransaction
+  , Category
+  , Transaction
+  , _ocr
+  , _tAmount
+  , _tag
+  , _transactor
+  )
 
 data Filter =
   Filter
     { _content :: Text
-    , _category :: Text
+    , _fCategory :: Text
     , _selector :: Transaction -> Text
     }
 
@@ -22,8 +32,7 @@ instance FromJSON Filter where
     o .: "content" >>=
     (\cont ->
        o .: "category" >>=
-       (\cat -> o .: "selector" >>=
-        (return . Filter cont cat . decodeSelector)))
+       (\cat -> o .: "selector" >>= (return . Filter cont cat . decodeSelector)))
   parseJSON _ = mzero
 
 decodeSelector :: Text -> (Transaction -> Text)
@@ -54,10 +63,12 @@ apply p ts = map (applyPred p ts)
 
 -- Like apply but associates each transactionlist with the corresponding category
 applyAssign ::
-     Predicate -> [Transaction] -> [Filter] -> [([Transaction], Category)]
-applyAssign p ts = map (\flt -> (applyPred p ts flt, _category flt))
+     Predicate -> [Transaction] -> [Filter] -> [CategorizedTransaction]
+applyAssign p ts flts =
+  map
+    (\(ts, c) -> CategorizedTransaction c ((sumMaybes . map _tAmount) ts))
+    (map (\flt -> (applyPred p ts flt, _fCategory flt)) flts)
 
-assignedAndUnmatched ::
-     [Transaction] -> [Filter] -> ([([Transaction], Category)], [Transaction])
+assignedAndUnmatched :: [Transaction] -> [Filter] -> Report
 assignedAndUnmatched ts flts =
-  (applyAssign match ts flts, applyAnd nomatch ts flts)
+  Report (applyAssign match ts flts) (applyAnd nomatch ts flts)

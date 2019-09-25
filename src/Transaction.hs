@@ -10,7 +10,7 @@ data Transaction =
   Transaction
     { _tag :: Text
     , _ocr :: Text
-    , _amount :: Maybe Double
+    , _tAmount :: Maybe Double
     , _transactor :: Text
     }
   deriving (Show)
@@ -18,6 +18,17 @@ data Transaction =
 instance ToJSON Transaction where
   toJSON (Transaction t o a d) =
     object ["tag" .= t, "ocr" .= o, "amount" .= a, "transactor" .= d]
+
+type Category = Text
+
+data CategorizedTransaction =
+  CategorizedTransaction
+    { _category :: Category
+    , _ctAmount :: Maybe Double
+    }
+
+instance ToJSON CategorizedTransaction where
+  toJSON (CategorizedTransaction c v) = object ["category" .= c, "amount" .= v]
 
 peel :: String -> String
 peel = tail . init
