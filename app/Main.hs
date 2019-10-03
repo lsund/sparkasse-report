@@ -47,7 +47,7 @@ run (OptSpec input filterSpec output) = do
       case mfs of
         Just fs -> do
           let reportJSON =
-                (encode . fromFilterResult . assignedAndUnmatched ts) fs
+                (encode . assignedAndUnmatched ts) fs
           case output of
             Just outputFile -> do
               BS.writeFile outputFile reportJSON

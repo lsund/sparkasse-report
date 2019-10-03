@@ -8,7 +8,6 @@ import Transaction
   ( CategorizedTransaction
   , CategorizedTransaction(..)
   , Transaction
-  , _tAmount
   )
 
 data Report =
