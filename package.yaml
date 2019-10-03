@@ -22,6 +22,7 @@ dependencies:
 - text
 - bytestring
 - optparse-applicative
+- utf8-string
 
 library:
   source-dirs: src
