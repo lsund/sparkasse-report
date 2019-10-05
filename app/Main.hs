@@ -2,15 +2,11 @@ module Main where
 
 import Control.Monad.Extra (allM)
 import Data.Aeson
-import qualified Data.ByteString.Lazy as BL
-import qualified Codec.Binary.UTF8.String as UTF8
--- import Data.ByteString.UTF8 (toString)
+import qualified Data.ByteString.Lazy as BS
 import Filter
 import Options.Applicative
 import System.Directory (doesFileExist)
 import Transaction
-import Data.Text (Text)
-import Data.Text as T
 
 readTransactions :: FilePath -> IO [Transaction]
 readTransactions = fmap transactionsFromString . readFile
@@ -38,13 +34,6 @@ parseOptSpec =
           ("Output file (exported sparkasse csv). " ++
            "If omitted, print to stdout")))
 
-readFileOrInput :: String -> IO BL.ByteString
-readFileOrInput input = do
-  x <- doesFileExist input
-  if x
-    then BL.readFile input
-    else return $ BL.pack $ UTF8.encode input
-
 run :: OptSpec -> IO ()
 run (OptSpec input filterSpec output) = do
   let requiredFiles = [input, filterSpec]
@@ -52,7 +41,7 @@ run (OptSpec input filterSpec output) = do
   if inputFilesExist
     then do
       ts <- readTransactions input
-      jsonStr <- BL.readFile filterSpec
+      jsonStr <- BS.readFile filterSpec
       let mfs = decode jsonStr :: Maybe [Filter]
       case mfs of
         Just fs -> do
@@ -60,9 +49,9 @@ run (OptSpec input filterSpec output) = do
                 (encode . assignedAndUnmatched ts) fs
           case output of
             Just outputFile -> do
-              BL.writeFile outputFile reportJSON
+              BS.writeFile outputFile reportJSON
               putStrLn $ "Success: wrote '" ++ outputFile ++ "'"
-            Nothing -> BL.putStr reportJSON
+            Nothing -> BS.putStr reportJSON
         Nothing -> putStrLn $ "Error: Could not parse '" ++ filterSpec ++ "'"
     else putStrLn $ "A file in " ++ show requiredFiles ++ " was not found."
 
